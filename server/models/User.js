@@ -6,7 +6,13 @@ import bcrypt from "bcryptjs";
 const userSchema = new mongoose.Schema({
     name:{type:String, required:true},
     email:{type:String, required:true , unique:true},
-    email:{type:String, required:true },
+    password: {
+  type: String,
+  required: true,
+     // This alters the hash — causes comparison to fail
+  trim: true,
+},
+
     credits:{type:Number, default:20}
 })
 
