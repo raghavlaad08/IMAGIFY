@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import ReactMarkdown from 'react-markdown';
 import moment from 'moment';
 import { assets } from '../assets/assets';
+import userIcon from '../assets/user_icon.svg';
 import Prism from 'prismjs'
 
 const Message = ({ message }) => {
@@ -16,9 +17,9 @@ const Message = ({ message }) => {
       <div className={`flex items-start gap-2 max-w-2xl ${isUser ? 'justify-end' : ''}`}>
         {!isUser && (
           <img
-            src={"src/assets/user_icon.svg"}
+            src={userIcon}
             alt="Assistant icon"
-            className="w-8 rounded-full"
+            className="rounded-full"
           />
         )}
         <div className={`
