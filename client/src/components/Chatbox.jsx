@@ -6,75 +6,108 @@ import toast from 'react-hot-toast';
 
 const Chatbox = () => {
   const containerRef = useRef(null);
-  const { selectedChat, theme, user ,axios ,token ,setUser} = useAppContext();
+  const { selectedChat, theme, user, axios, token, setUser } = useAppContext();
   const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [prompt, setPrompt] = useState('text');
+  const [prompt, setPrompt] = useState('');
   const [mode, setMode] = useState('text');
   const [isPublished, setIsPublished] = useState(false);
-  const [input, setInput] = useState('');
 
   const onSubmit = async (e) => {
-    
     try {
-      e.preventDefault()
-      if(!user) return toast('Login to send message')
-        setLoading(true)
-        const promptCopy = prompt
-        setPrompt('')
-        setMessages(prev=>[...prev,{role:'user',content:prompt,timestamp:Date.now(),isImage:false}])
-        const{data} = await axios.post(`/api/messages/${mode}`,{chatId:selectedChat._id,prompt,isPublished},{headers:{Authorization:token}})
-        console.log(data)
-        if(data.success){
-          
+      e.preventDefault();
+      
+      // Check if user is logged in
+      if (!user) return toast.error('Login to send message');
+      
+      // Check if a chat is selected
+      if (!selectedChat || !selectedChat._id) {
+        return toast.error('Please select a chat first');
+      }
+      
+      // Check if prompt is not empty
+      if (!prompt.trim()) {
+        return toast.error('Please enter a message');
+      }
+
+      setLoading(true);
+      const promptCopy = prompt;
+      setPrompt('');
+      
+      // Add user message to UI immediately
+      setMessages(prev => [...prev, {
+        role: 'user',
+        content: promptCopy,
+        timestamp: Date.now(),
+        isImage: false
+      }]);
+
+      const { data } = await axios.post(`/api/messages/${mode}`, {
+        chatId: selectedChat._id,
+        prompt: promptCopy,
+        isPublished
+      }, {
+        headers: { Authorization: token }
+      });
+
+      console.log(data);
+      
+      if (data.success) {
+        setMessages(prev => [...prev, data.reply]);
         
-          setMessages(prev =>[...prev,data.reply])
-          // decrease credits
-          if (mode==='image'){
-            setUser(prev=>({...prev,credits : prev.credits - 2}))
-          }else{
-            setUser(prev=>({...prev,credits : prev.credits - 1}))
-          }//else{
-          //   toast.error(data.message)
-          //   setPrompt(promptCopy)
-          // }
+        // Decrease credits
+        if (mode === 'image') {
+          setUser(prev => ({ ...prev, credits: prev.credits - 2 }));
+        } else {
+          setUser(prev => ({ ...prev, credits: prev.credits - 1 }));
         }
-    }catch(error){
-      toast.error(error.message)
-    }finally{
-      setPrompt('')
-      setLoading(false)
+      } else {
+        toast.error(data.message || 'Something went wrong');
+        // Remove the user message if API call failed
+        setMessages(prev => prev.slice(0, -1));
+      }
+    } catch (error) {
+      console.error('Error sending message:', error);
+      toast.error(error.response?.data?.message || error.message || 'Failed to send message');
+      // Remove the user message if API call failed
+      setMessages(prev => prev.slice(0, -1));
+    } finally {
+      setLoading(false);
     }
   };
 
   useEffect(() => {
-    if (selectedChat) {
-      setMessages(selectedChat.messages );
+    if (selectedChat && selectedChat.messages) {
+      setMessages(selectedChat.messages);
+    } else {
+      setMessages([]);
     }
   }, [selectedChat]);
-  useEffect(()=>{if(containerRef.current){
-    containerRef.current.scrollTo({
-      top: containerRef.current.scrollHeight,
-      behavior:"smooth"
-    })
-    
-    
-    
-  }
-    
-  },[messages])
 
-  // const handleSubmit = (e) => {
-  //   e.preventDefault();
-  //   if (!input.trim()) return;
-  //   const newMessage = {
-  //     role: 'user',
-  //     content: input,
-  //     timestamp: new Date().toLocaleTimeString(),
-  //   };
-  //   setMessages([...messages, newMessage]);
-  //   setInput('');
-  // };
+  useEffect(() => {
+    if (containerRef.current) {
+      containerRef.current.scrollTo({
+        top: containerRef.current.scrollHeight,
+        behavior: "smooth"
+      });
+    }
+  }, [messages]);
+
+  // Show a message when no chat is selected
+  if (!selectedChat) {
+    return (
+      <div className="flex flex-col justify-center items-center h-full m-5 md:m-10 xl:mx-32 max-md:mt-14 2xl:pr-40">
+        <div className="text-center text-gray-400 dark:text-white">
+          <img
+            src={theme === 'dark' ? assets.logo_full : assets.logo_full_dark}
+            alt="logo"
+            className="w-full max-w-64 sm:max-w-72 mx-auto mb-5"
+          />
+          <p className="text-2xl sm:text-4xl">Select a chat to start messaging</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col justify-between m-5 md:m-10 xl:mx-32 max-md:mt-14 2xl:pr-40">
@@ -96,17 +129,18 @@ const Chatbox = () => {
             <Message key={index} message={msg} />
           ))
         )}
-        {/*Three Dots Loading*/}
+        
+        {/* Three Dots Loading */}
         {loading && (
-          <div className="loader flex items-center gap-1.5">
-            <div className="=w-1.5 h-1.5 rounded-full bg-gray-500 dark:bg-white animate-bounce"></div>
-            <div className="=w-1.5 h-1.5 rounded-full bg-gray-500 dark:bg-white animate-bounce"></div>
-            <div className="=w-1.5 h-1.5 rounded-full bg-gray-500 dark:bg-white animate-bounce"></div>
+          <div className="loader flex items-center gap-1.5 p-4">
+            <div className="w-1.5 h-1.5 rounded-full bg-gray-500 dark:bg-white animate-bounce"></div>
+            <div className="w-1.5 h-1.5 rounded-full bg-gray-500 dark:bg-white animate-bounce" style={{animationDelay: '0.1s'}}></div>
+            <div className="w-1.5 h-1.5 rounded-full bg-gray-500 dark:bg-white animate-bounce" style={{animationDelay: '0.2s'}}></div>
           </div>
         )}
       </div>
 
-      {mode == 'image' && (
+      {mode === 'image' && (
         <label className="inline-flex items-center gap-2 mb-3 text-sm mx-auto">
           <p className="text-xs">Publish Generated Image to Community</p>
           <input
@@ -126,7 +160,7 @@ const Chatbox = () => {
         <select
           onChange={(e) => setMode(e.target.value)}
           value={mode}
-          className="text-sm pl-3 pr-2 outline-none"
+          className="text-sm pl-3 pr-2 outline-none bg-transparent"
         >
           <option className="dark:bg-purple-900" value="text">
             Text
@@ -139,15 +173,16 @@ const Chatbox = () => {
           onChange={(e) => setPrompt(e.target.value)}
           value={prompt}
           type="text"
-          placeholder="Type your promt here...."
-          className="flex-1 w-full text-sm outline-none"
+          placeholder="Type your prompt here...."
+          className="flex-1 w-full text-sm outline-none bg-transparent"
           required
+          disabled={loading}
         />
-        <button disabled={loading}>
+        <button type="submit" disabled={loading || !selectedChat}>
           <img
             src={loading ? assets.stop_icon : assets.send_icon}
             className="w-8 cursor-pointer"
-            alt=""
+            alt="Send"
           />
         </button>
       </form>
