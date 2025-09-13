@@ -116,7 +116,7 @@ const Chatbox = () => {
         {messages.length === 0 ? (
           <div className="h-full flex flex-col items-center justify-center gap-2 text-primary">
             <img
-              src={theme === 'dark' ? assets.logo_full : assets.logo_full_dark}
+              src={"src/assets/user_icon.svg"}
               alt="logo"
               className="w-full max-w-64 sm:max-w-72"
             />
