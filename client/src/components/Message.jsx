@@ -16,7 +16,7 @@ const Message = ({ message }) => {
       <div className={`flex items-start gap-2 max-w-2xl ${isUser ? 'justify-end' : ''}`}>
         {!isUser && (
           <img
-            src={assets.bot_icon /* or assistant icon */}
+            src={"src/assets/user_icon.svg"}
             alt="Assistant icon"
             className="w-8 rounded-full"
           />
